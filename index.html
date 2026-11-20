@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NOX MX | Scanner</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #090909;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 22px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 40px;
+      font-weight: 900;
+      letter-spacing: 7px;
+    }
+
+    .logo span { color: #e50920; }
+
+    .subtitle {
+      color: #888;
+      font-size: 12px;
+      letter-spacing: 3px;
+      margin: 8px 0 30px;
+    }
+
+    .panel {
+      background: #151515;
+      border: 1px solid #292929;
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    #reader {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #080808;
+    }
+
+    .status {
+      margin-top: 18px;
+      padding: 18px 12px;
+      border-radius: 12px;
+      background: #222;
+      color: #aaa;
+      font-weight: bold;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-wrap: anywhere;
+    }
+
+    .success {
+      background: #12351f;
+      color: #61e58a;
+    }
+
+    .error {
+      background: #42171b;
+      color: #ff6875;
+    }
+
+    .loading {
+      background: #302817;
+      color: #ffd36a;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 17px;
+      border: none;
+      border-radius: 10px;
+      background: #e50920;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+    }
+
+    .footer {
+      margin-top: 25px;
+      color: #555;
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+
+    <div class="logo">NOX <span>MX</span></div>
+    <div class="subtitle">TICKETING SYSTEM</div>
+
+    <section class="panel">
+      <div id="reader"></div>
+
+      <div id="status" class="status">
+        SISTEMA LISTO
+      </div>
+
+      <button id="scanButton" onclick="startScanner()">
+        ACTIVAR ESCÁNER
+      </button>
+    </section>
+
+    <div class="footer">ACCESS CONTROL SYSTEM</div>
+  </main>
+
+  <script>
+    let scanner = null;
+    let processing = false;
+
+    const statusBox = document.getElementById("status");
+    const scanButton = document.getElementById("scanButton");
+
+    function showStatus(message, type = "") {
+      statusBox.className = "status " + type;
+      statusBox.textContent = message;
+    }
+
+    async function startScanner() {
+      try {
+        if (!window.isSecureContext) {
+          throw new Error("La página no está en un contexto seguro HTTPS");
+        }
+
+        if (!scanner) {
+          scanner = new Html5Qrcode("reader");
+        }
+
+        scanButton.disabled = true;
+        showStatus("ACTIVANDO CÁMARA...", "loading");
+
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 230, height: 230 } },
+          onScanSuccess
+        );
+
+        showStatus("CÁMARA ACTIVA · ESCANEA UN QR");
+      } catch (error) {
+        showStatus("ERROR: " + String(error), "error");
+        scanButton.disabled = false;
+      }
+    }
+
+    async function onScanSuccess(decodedText) {
+      if (processing) return;
+
+      processing = true;
+
+      try {
+        await scanner.stop();
+
+        // PRUEBA LOCAL: todavía no valida boletos.
+        showStatus("QR LEÍDO CORRECTAMENTE", "success");
+
+        scanButton.textContent = "ESCANEAR DE NUEVO";
+        scanButton.disabled = false;
+
+      } catch (error) {
+        showStatus("ERROR: " + String(error), "error");
+        scanButton.disabled = false;
+      }
+
+      processing = false;
+    }
+  </script>
+</body>
+</html>
